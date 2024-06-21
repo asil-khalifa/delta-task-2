@@ -1,0 +1,19 @@
+#nav{
+    display: flex;
+    justify-content: center;
+    margin: 20px;
+    background-color: #ade8f4;
+    border: 2.5px solid #0096c7;
+    padding: 20px 10px;
+
+}
+
+#nav button{
+    margin: 0 20px;
+    height: 50px;
+    padding: 10px;
+    background-color: azure;
+    font-family: 'poppins', sans-serif;
+    font-weight: 450;
+    font-size: 20px;
+}

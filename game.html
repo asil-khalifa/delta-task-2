@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last Stand | Preparation Phase</title>
+    <link rel="stylesheet" href="game.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <a href="index.html"><button id="backButton">← BACK</button></a>
+    <h2 id="player-instruction"></h2>
+    <button id="resetButton" class="hide-element buttons1">RESET GAME</button>
+    <button id="startInvasion" class="buttons1">START INVASION!</button>
+    <button id="pauseButton" class="buttons1">PAUSE</button>
+
+    <canvas id="canvas"></canvas>
+    <div id="control-panel">
+        <div>
+            <img src="images/block.png" alt="block" draggable="true">
+            <h3>4</h3>
+        </div>
+    </div>
+    <div id="invasion-panel">
+        <div id="gun1Div">
+            <img src="images/gun1.png" alt="Semi-Automatic">
+            <h3>1</h3>
+        </div>
+        <div id="gun2Div">
+            <img src="images/gun2.png" alt="Pistol">
+            <h3>2</h3>
+        </div>
+        <div id="gun3Div">
+            <img src="images/gun3.png" alt="Rifle">
+            <h3>3</h3>
+        </div>
+    </div>
+
+    <div id="saveGamePanel">
+        <h2>Enter your name to save game</h2>
+        <h3>Your Score:</h3>
+        <input type="text" placeholder="Your Name" required>
+        <button id="submitSave">Submit</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+
+</html>

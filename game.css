@@ -1,0 +1,119 @@
+*{
+    box-sizing: border-box;
+}
+
+body{
+    margin: 0;
+    background-color: #354f52;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#player-instruction{
+    border: 2.5px solid #1d3557;
+    background-color: #e8e8e4;
+    color: #023047;
+}
+
+canvas{
+    background-color: white;
+}
+
+#control-panel{
+    background-color: #e8e8e4;
+    margin-top: 25px;
+    padding: 5px 15px;
+    width: 1024px;
+    height: 100px;
+
+}
+
+#control-panel div{
+    background-color: #fefae0;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#control-panel div img{
+    width: 75px;
+    height: 75px;
+}
+
+#control-panel div h3{
+    margin: 0;
+}
+
+
+#invasion-panel{
+    background-color: #e8e8e4;
+    margin-top: 25px;
+    padding: 5px 15px;
+    width: 1024px;
+    height: 100px;
+    display: flex;
+    
+}
+
+#invasion-panel div{
+    margin-right: 10px;
+    background-color: #fefae0;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#invasion-panel div img{
+    width: 75px;
+    height: 75px;
+}
+
+.hide-element{
+    display: none;
+}
+
+.buttons1{
+    margin-bottom: 15px;
+    margin-right: 10px;
+
+    background-color: aliceblue;
+    font-size: 25px;
+}
+
+#backButton{
+    font-size: 20px;
+    background-color: red;
+    position: absolute;
+    left: 5px;
+    top: 10px;
+}
+
+#saveGamePanel {
+    background-color: #bde0fe;
+    border: 5px solid #a2d2ff;
+    border-radius: 10px;
+    width: 700px;
+    height: 500px;
+}
+
+#saveGamePanel input{
+    margin-bottom: 25px;
+}
+
+.saveGameDisplay1{
+    display: none;
+}
+
+.saveGameDisplay2{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
