@@ -54,7 +54,7 @@ const zombieImages = {
     '1': {
         'activities': ['walking', 'slashing'],
         'walking': {
-            'src': 'sprites/zombie/Zombie_Villager_1/Walking',
+            'src': 'sprites/zombie/zombie1/Walking',
             'images': [],
             'start': '0.png',
             'total': 24,
@@ -64,7 +64,7 @@ const zombieImages = {
             'sHeight': 550
         },
         'slashing': {
-            'src': 'sprites/zombie/Zombie_Villager_1/Slashing',
+            'src': 'sprites/zombie/zombie1/Slashing',
             'images': [],
             'start': '0.png',
             'total': 12,
