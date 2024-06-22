@@ -11,6 +11,7 @@ const saveGamePanelInput = document.querySelector('#saveGamePanel input');
 const saveGameButton = document.querySelector('#submitSave');
 //buttons:
 const resetButton = document.querySelector('#resetButton');
+const leaderboardButton = document.querySelector('#viewLeaderboard');
 const startInvasion = document.querySelector('#startInvasion');
 const pauseButton = document.querySelector('#pauseButton');
 
@@ -36,7 +37,7 @@ const bulletGun1Audio = new Audio('audio/bulletGun1.mp3');
 const bulletGun2Audio = new Audio('audio/bulletGun2.mp3');
 const bulletGun3Audio = new Audio('audio/bulletGun3.mp3');
 const playerWalkingAudio = new Audio('audio/playerWalking.mp3');
-const spookySfxAudio = new Audio('audio/spookySfx1.mp3');
+const spookySfxAudio = new Audio('audio/spookySfx3.mp3');
 const slashingBlockAudio = new Audio('audio/slashing.mp3');
 const slashingPlayerAudio = new Audio('audio/slashingPlayer.mp3');
 const zombieDeathAudio = new Audio('audio/zombieDeath.mp3');
@@ -56,7 +57,6 @@ const zombieImages = {
         'walking': {
             'src': 'sprites/zombie/zombie1/Walking',
             'images': [],
-            'start': '0.png',
             'total': 24,
             'sx': 250,
             'sy': 200,
@@ -66,14 +66,55 @@ const zombieImages = {
         'slashing': {
             'src': 'sprites/zombie/zombie1/Slashing',
             'images': [],
-            'start': '0.png',
             'total': 12,
             'sx': 250,
             'sy': 200,
             'sWidth': 650,
             'sHeight': 550
         }
-    }
+    },
+    '2': {
+        'activities': ['walking', 'slashing'],
+        'walking': {
+            'src': 'sprites/zombie/zombie2/Walking',
+            'images': [],
+            'total': 24,
+            'sx': 250,
+            'sy': 200,
+            'sWidth': 400,
+            'sHeight': 550
+        },
+        'slashing': {
+            'src': 'sprites/zombie/zombie2/Slashing',
+            'images': [],
+            'total': 12,
+            'sx': 250,
+            'sy': 200,
+            'sWidth': 650,
+            'sHeight': 550
+        }
+    },
+    '3': {
+        'activities': ['walking', 'slashing'],
+        'walking': {
+            'src': 'sprites/zombie/zombie3/Walking',
+            'images': [],
+            'total': 24,
+            'sx': 250,
+            'sy': 200,
+            'sWidth': 400,
+            'sHeight': 550
+        },
+        'slashing': {
+            'src': 'sprites/zombie/zombie3/Slashing',
+            'images': [],
+            'total': 12,
+            'sx': 250,
+            'sy': 200,
+            'sWidth': 650,
+            'sHeight': 550
+        }
+    },
 }
 
 //Load all zombie images now itself
@@ -203,7 +244,7 @@ class Player {
         player1.onGround = false;
         //y movements:
         //Jetpack: fly up
-        if (keys.flyUp.pressed) {
+        if (keys.flyUp.pressed && powerUps['jetpack'].on) {
             this.dy -= this.jetPackSpeed * deltaT;
             jetpackAudio.play();
         }
@@ -286,7 +327,7 @@ class Player {
                 //Check if user flies out of ceiling:
                 if ((newBottomY - this.height) < 0) {
                     // No change to this.y
-                    if (keys.flyUp.pressed) this.dy += this.jetPackSpeed * deltaT;
+                    if (keys.flyUp.pressed && powerUps['jetpack'].on) this.dy += this.jetPackSpeed * deltaT;
                 }
                 else {
                     //NORMAL Case:
@@ -296,7 +337,7 @@ class Player {
             else if (blocksToCheck > 0) {
 
                 this.y = blocksToCheck[0].y + blocksToCheck[0].height;
-                if (keys.flyUp.pressed) this.dy += this.jetPackSpeed * deltaT;
+                if (keys.flyUp.pressed && powerUps['jetpack'].on) this.dy += this.jetPackSpeed * deltaT;
             }
 
         }
@@ -384,8 +425,8 @@ class Block {
         this.y = y;
         this.dx = 0;
 
-        this.totalHealth = 200;
-        this.health = 200;
+        this.totalHealth = 150;
+        this.health = 150;
     }
 
     draw() {
@@ -484,14 +525,19 @@ class Gun {
             let newBullet = new Bullet(this.x, this.y, speedX, speedY, this.image);
             bullets.push(newBullet);
 
-            this.cooldown = this.cooldownPeriod;
-
             this.audio.play();
+
+            let cooldownTime = this.cooldownPeriod;
+            if (powerUps['reloadTime'].on) {
+                cooldownTime /= 4;
+            }
+
+            this.cooldown = cooldownTime;
 
             setTimeout(() => {
                 this.cooldown = 0;
                 reloadAudio.play();
-            }, this.cooldownPeriod * 1000);
+            }, cooldownTime * 1000);
         }
     }
 
@@ -528,13 +574,13 @@ class Bullet {
 
     setDamage() {
         if (this.gun === gunImage1) {
-            this.damage = 1.5;
+            this.damage = 15;
         }
         else if (this.gun === gunImage2) {
-            this.damage = 1;
+            this.damage = 10;
         }
         else if (this.gun === gunImage3) {
-            this.damage = 3;
+            this.damage = 30;
         }
     }
 
@@ -576,8 +622,7 @@ class Bullet {
         for (let zombie of zombies) {
             let dummyZombie = new Dummy(zombie.x + scrollOffset, zombie.y, zombie.width, zombie.height);
             if (xOverlap1(dummyZombie, this) && yOverlap1(this, dummyZombie)) {
-                zombie.health = Math.max(0, zombie.health - this.damage * deltaT);
-                console.log('bullet hit', this.damage);
+                zombie.health = Math.max(0, zombie.health - this.damage);
                 return index;
             }
         }
@@ -596,6 +641,9 @@ class Zombie {
         this.dx = dx;
         this.dy = dy;
 
+        this.acc = gravity/20;
+
+        this.width = 101.818; //This is the display width while walking
         this.height = 140;
 
         this.setBasicDetails();
@@ -608,10 +656,27 @@ class Zombie {
 
         this.randomOffset = Math.random() * 6 - 3;
         if (this.number === '1') {
-            this.damage = .001;
+            this.damage = .01;
             this.health = 30;
             this.totalHealth = 30;
+            this.points = 5;
+            this.coins = 5;
         }
+        else if (this.number === '3') {
+            this.damage = .05;
+            this.health = 50;
+            this.totalHealth = 50;
+            this.points = 10;
+            this.coins = 9;
+        }
+        else if (this.number === '2') {
+            this.damage = .1;
+            this.health = 75;
+            this.totalHealth = 75;
+            this.points = 20;
+            this.coins = 13;
+        }
+
     }
 
     updateDetails(action = 'walking') {
@@ -625,7 +690,7 @@ class Zombie {
             = zombieProps
         );
         this.ratio = this.sWidth / this.sHeight;
-        this.width = this.height * this.ratio;
+        this.displayWidth = this.height * this.ratio;
 
         if (action === 'walking') {
             this.frameSpeedFactor = 1 / 2 * 1 / 16.6667;
@@ -643,19 +708,18 @@ class Zombie {
         let x = this.x + scrollOffset + this.randomOffset;
 
         if (this.dx > 0) {
-            ctx.drawImage(this.image, this.sx, this.sy, this.sWidth, this.sHeight, x, this.y, this.width, this.height);
+            ctx.drawImage(this.image, this.sx, this.sy, this.sWidth, this.sHeight, x, this.y, this.displayWidth, this.height);
         }
         else {
             ctx.save();
-            ctx.translate(x + this.width, this.y);
+            ctx.translate(x + this.displayWidth, this.y);
             ctx.scale(-1, 1);
-            ctx.drawImage(this.image, this.sx, this.sy, this.sWidth, this.sHeight, 0, 0, this.width, this.height);
+            ctx.drawImage(this.image, this.sx, this.sy, this.sWidth, this.sHeight, 0, 0, this.displayWidth, this.height);
             ctx.restore();
         }
     }
 
     update(deltaT) {
-
         //Set Direction in which zombie would move:
         if (this.x + this.width + scrollOffset < player1.x) {
             this.dx = Math.abs(this.dx);
@@ -665,26 +729,60 @@ class Zombie {
             this.dx = -Math.abs(this.dx);
         }
 
-        //x movement
+        // movement
         let updateX = true, newAction = 'walking';
         let dummyAddOffset = new Dummy(this.x + scrollOffset + this.dx * deltaT, this.y, this.width, this.height);
 
-        // if there will be collision with block...
-        for (let block of blocks) {
-            if (xOverlap1(dummyAddOffset, block) && yOverlap1(block, dummyAddOffset)) {
-                updateX = false;
-                newAction = 'slashing';
-                block.health = Math.max(0, block.health - this.damage * deltaT);
-                slashingBlockAudio.play();
-            }
-        }
+        // y Movements:
+
+        //Prevent falling below ground
+        // if (dummyAddOffset.y + this.height > canvas.height) {
+        //     console.log('below ground');
+        //     this.y = canvas.height - this.height;
+        //     // this.dy = 0;
+        // }
+        // else {
+        //     let blockAdjusted = false;
+        //     for (let block of blocks) {
+        //         if (xOverlap1(dummyAddOffset, block) && this.y + this.height <= block.y && dummyAddOffset.y + this.height > block.y) {
+        //             this.y = block.y - this.height;
+        //             // this.dy = 0;
+        //             blockAdjusted = true;
+        //             console.log('below block');
+
+        //             //break;
+        //         }
+        //     }
+        //     if (!blockAdjusted) {
+        //         this.y = dummyAddOffset.y;
+        //         this.dy += this.acc * deltaT;
+        //     }
+        // }
 
         //if there will be collision with player...
         if (xOverlap1(player1, dummyAddOffset) && yOverlap1(dummyAddOffset, player1)) {
             updateX = false;
             newAction = 'slashing';
-            player1.health = Math.max(0, player1.health - this.damage * deltaT);
+            if (!powerUps['tempImmunity'].on) {
+                player1.health = Math.max(0, player1.health - this.damage);
+            }
             slashingPlayerAudio.play();
+        }
+        //else statement so that either player or block, not both are hit
+        else {
+            // if there will be collision with block...
+            for (let block of blocks) {
+                if (xOverlap1(dummyAddOffset, block) && yOverlap1(block, dummyAddOffset)) {
+
+                    updateX = false;
+                    newAction = 'slashing';
+                    block.health = Math.max(0, block.health - this.damage);
+                    slashingBlockAudio.play();
+                    break; //Break one block at a time
+
+                }
+            }
+
         }
 
         if (updateX) {
@@ -693,6 +791,12 @@ class Zombie {
 
         this.updateDetails(newAction);
         this.updateFrames(deltaT);
+
+        //Special Ability Zombie:
+        //Regenerate Health:
+        if (this.number === '2'){
+            this.health = Math.min(this.totalHealth, this.health + .2);
+        }
 
         this.draw();
     }
@@ -805,18 +909,19 @@ function animateInvasion(timeStamp) {
     let deltaT = timeStamp - curTime;
     curTime = timeStamp;
 
-    //Skip if initializing or if tab went out of focus for more than 50ms (OR if refresh rate< 20 Hz)
-    if (deltaT === 0 || deltaT > 50 || gamePaused) {
+    //Skip if initializing or if tab went out of focus for more than 400ms (OR if refresh rate< 20 Hz)
+    if (deltaT === 0 || deltaT > 400 || gamePaused) {
         // Unpress all keys:
         for (let key in keys) {
             keys[key].pressed = false;
         }
 
-
+        if (deltaT > 3500 && !gamePaused) {
+            handlePause();
+        }
     }
 
-    else {
-
+    else {  
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         bgObjects.forEach(obj => {
@@ -836,7 +941,8 @@ function animateInvasion(timeStamp) {
 
         for (let i = zombies.length - 1; i >= 0; i--) {
             if (zombies[i].health === 0) {
-                points += 5;
+                coins += zombies[i].coins;
+                points += zombies[i].points;
                 zombies.splice(i, 1);
                 zombieDeathAudio.play();
             }
@@ -870,6 +976,23 @@ function animateInvasion(timeStamp) {
             bullets.splice(i, 1);
         }
 
+
+        //PowerUp Power up Animations:
+
+        for (let pu in powerUps) {
+            if (!powerUps[pu].on) {
+
+                let jetpackCoinsLeft = Math.max(0, (powerUps[pu].coins - coins) / powerUps[pu].coins * 100);
+                powerUps[pu].button.style.background = `linear-gradient(#6c757d  ${jetpackCoinsLeft}%, #06d6a0 ${jetpackCoinsLeft}%)`;
+
+                if (coins >= powerUps[pu].coins) {
+                    powerUps[pu].button.style.cursor = 'pointer';
+                }
+            }
+
+        }
+
+
         //Win loss scenario
 
         if (zombies.length === 0) {
@@ -877,7 +1000,7 @@ function animateInvasion(timeStamp) {
                 //More zombies are yet to come
             }
             else {
-                //Won the Game
+                //Won the level
                 invasionPanel.style.display = 'none';
                 playerInstruction.classList.add('hide-element');
 
@@ -926,6 +1049,7 @@ function animateInvasion(timeStamp) {
 
             setTimeout(() => {
                 resetButton.classList.remove('hide-element');
+                leaderboardButton.classList.remove('hide-element');
                 saveGamePanel.classList.remove('saveGameDisplay1');
                 saveGamePanel.classList.add('saveGameDisplay2');
                 canvas.classList.add('hide-element');
@@ -945,16 +1069,56 @@ function animateInvasion(timeStamp) {
         })
 
         zombies.forEach(zombie => {
-            healthBar(zombie.x + scrollOffset, zombie.y - 20, zombie.health, zombie.totalHealth, '#ef476f');
+            if (zombie.number === '2'){
+                healthBar(zombie.x + scrollOffset, zombie.y - 20, zombie.health, zombie.totalHealth, '#d00000');
+
+            }
+            else{
+
+                healthBar(zombie.x + scrollOffset, zombie.y - 20, zombie.health, zombie.totalHealth, '#ef476f');
+            }
         })
 
     }
 
+    //Messages:
+
     ctx.font = '25px "Press Start 2P"';
     ctx.fillStyle = '#ffbe0b';
+
     ctx.fillText(`Points:`, canvas.width - 180, 35);
     ctx.fillText(`${points}`, canvas.width - 120, 70);
+
+    ctx.fillText(`Coins:`, 10, 35);
+    ctx.fillText(`${coins}`, 60, 70);
+
+    //powerUp display message - for latest powerUp:
+    ctx.font = '12.5px "Press Start 2P"';
+    let latestPowerUp;
+
+    for (let pu in powerUps) {
+        if (powerUps[pu].on) {
+            if (latestPowerUp) {
+                if (powerUps[latestPowerUp].totalTime - powerUps[latestPowerUp].time
+                    > powerUps[pu].totalTime - powerUps[pu].time
+                ) {
+                    latestPowerUp = pu;
+                }
+            }
+            else {
+                latestPowerUp = pu;
+            }
+        }
+    }
+
+    ctx.fillStyle = '#fb5607';
+    if (latestPowerUp) {
+        ctx.fillText(powerUps[latestPowerUp].displayText, 325, 35);
+    }
+
     ctx.font = '10px sans serif'; //Default value
+
+
 
     requestAnimationFrame(animateInvasion);
 }
@@ -1007,7 +1171,14 @@ function animatePrep(timeStamp) {
 
 const blockImage = new Image();
 blockImage.src = 'images/block.png';
+
+//Check whether background is loaded:
 const backgroundImage = new Image();
+
+let backgroundIsLoaded = false;
+backgroundImage.onload = () => {
+    backgroundIsLoaded = true;
+}
 backgroundImage.src = 'images/background2.jpg';
 
 // guns and bullets:
@@ -1076,6 +1247,7 @@ let noZombies;
 let zombieStopIds;
 
 let points = 0;
+let coins = 0;
 
 let phaseChangeTimeoutIds = [];
 
@@ -1085,6 +1257,7 @@ function initInvasion() {
 
     spookySfxAudio.play();
 
+    playerInstruction.classList.remove('hide-element');
     startInvasion.classList.add('hide-element');
     pauseButton.classList.remove('hide-element');
 
@@ -1108,11 +1281,11 @@ function initInvasion() {
 
     //Zombies Number
 
-    //* set this
     noZombies = {
-        '1': Math.floor(Math.sqrt(phase) * 10),
-        '2': 0,
-        '3': 0
+        '1': Math.floor(15 + phase*2),
+        '2': Math.floor(2 + phase*1.5),
+        '3': Math.floor(3 + phase*2),
+
     }
 
     zombieStopIds = {
@@ -1122,6 +1295,11 @@ function initInvasion() {
     }
 
     zombieStopIds['1'] = setInterval(() => {
+        if (noZombies['1'] <= 0) {
+            clearInterval(zombieStopIds['1']);
+            zombieStopIds['1'] = null;
+            return;
+        }
         noZombies['1']--;
         if (Math.random() < .5) {
 
@@ -1130,10 +1308,54 @@ function initInvasion() {
         else {
             zombies.push(new Zombie('1', .1, 0, canvas.width + 650))
         }
-        if (noZombies['1'] === 0) {
-            clearInterval(zombieStopIds['1']);
-        }
     }, 250);
+
+    zombieStopIds['3'] = setInterval(() => {
+        //Wait for zombie 1's to spawn before this set
+
+        if (noZombies['3'] <= 0) {
+            clearInterval(zombieStopIds['3']);
+            zombieStopIds['3'] = null;
+            return;
+        }
+
+        if (zombieStopIds['1']) {
+            return;
+        }
+
+
+        noZombies['3']--;
+        if (Math.random() < .5) {
+
+            zombies.push(new Zombie('3', .15, 0, -650))
+        }
+        else {
+            zombies.push(new Zombie('3', .15, 0, canvas.width + 650))
+        }
+    }, 1000);
+
+    zombieStopIds['2'] = setInterval(() => {
+        //Wait for zombie 3's to spawn before this set
+
+        if (noZombies['2'] <= 0) {
+            clearInterval(zombieStopIds['2']);
+            zombieStopIds['2'] = null;
+            return;
+        }
+
+        if (zombieStopIds['3']) {
+            return;
+        }
+
+        noZombies['2']--;
+        if (Math.random() < .5) {
+
+            zombies.push(new Zombie('2', .2, 0, -650))
+        }
+        else {
+            zombies.push(new Zombie('2', .2, 0, canvas.width + 650))
+        }
+    }, 2000);
 
     document.title = 'Last Stand | Fight the Zombies!';
     playerInstruction.innerText = 'Kill all zombies to win!';
@@ -1142,8 +1364,10 @@ function initInvasion() {
 }
 
 function initPrep() {
+    playerInstruction.classList.remove('hide-element');
     pauseButton.classList.add('hide-element');
     startInvasion.classList.remove('hide-element');
+    leaderboardButton.classList.add('hide-element');
 
     phaseChangeTimeoutIds.push(setTimeout(() => {
         phase++;
@@ -1179,23 +1403,26 @@ function initPrep() {
     requestAnimationFrame(animatePrep);
 }
 
-// initInvasion();
-
-initPrep();
-
 //Reset Button:
 
 resetButton.addEventListener('click', () => {
     phase = 0;
+    points = 0;
+    coins = 0;
+
     playerLost = false;
+
     playerInstruction.classList.remove('hide-element');
     canvas.classList.remove('hide-element');
+    saveGamePanel.classList.add('saveGameDisplay1');
+    saveGamePanel.classList.remove('saveGameDisplay2');
+
     for (let id of phaseChangeTimeoutIds) {
         clearInterval(id);
     }
     initPrep();
-}
-);
+});
+
 
 //Start Invasion Button:
 
@@ -1340,6 +1567,11 @@ canvas.addEventListener('mousedown', e => {
 })
 
 pauseButton.addEventListener('click', () => {
+    handlePause();
+    pauseButton.blur();
+});
+
+function handlePause() {
     gamePaused = !gamePaused;
     if (gamePaused) {
         pauseButton.innerText = 'RESUME';
@@ -1355,12 +1587,20 @@ pauseButton.addEventListener('click', () => {
 
         spookySfxAudio.pause();
 
+        //powerUp handling:
+        for (let pu in powerUps) {
+            pausePowerUp(pu);
+        }
     }
     else {
         pauseButton.innerText = 'PAUSE';
-
+        for (let pu in powerUps) {
+            if (powerUps[pu].time) {
+                startPowerUpTimer(pu, powerUps[pu].time);
+            }
+        }
     }
-})
+}
 
 //Leaderboard Submit Save Game
 
@@ -1382,7 +1622,7 @@ saveGameButton.addEventListener('click', () => {
     let name = saveGamePanelInput.value;
     let log = localStorage.getItem('lastStandLogAsil');
 
-    if (log === null){
+    if (log === null) {
         let newLog = {
             noOfGames: 1,
             games: [
@@ -1395,11 +1635,117 @@ saveGameButton.addEventListener('click', () => {
         localStorage.setItem('lastStandLogAsil', JSON.stringify(newLog));
     }
 
-    else{
+    else {
         log = JSON.parse(log);
         log.noOfGames++;
-        log.games.push({name, score: points});
+        log.games.push({ name, score: points });
         localStorage.setItem('lastStandLogAsil', JSON.stringify(log));
     }
 
+    saveGamePanel.classList.add('saveGameDisplay1');
+    saveGamePanel.classList.remove('saveGameDisplay2');
+
+
 })
+
+//Power Ups:
+
+const jetpackButton = document.querySelector('#jetpack');
+
+let powerUps = {
+    'jetpack': {
+        'on': false,
+        'coins': 100,
+        'id': null,
+        'time': null,
+        'totalTime': 10,
+        'button': jetpackButton,
+        'displayText': 'Press SPACEBAR to use Jetpack',
+    },
+    'tempImmunity': {
+        'on': false,
+        'coins': 50,
+        'id': null,
+        'time': null,
+        'totalTime': 7.5,
+        'button': document.querySelector('#temp-immunity'),
+        'displayText': 'Zombies can\'t harm you for now',
+    },
+    'increaseHealth': {
+        'on': false,
+        'coins': 50,
+        'id': null,
+        'time': null,
+        'totalTime': 15,
+        'button': document.querySelector('#increase-health'),
+        'displayText': 'Health Increased',
+    },
+    'reloadTime': {
+        'on': false,
+        'coins': 30,
+        'id': null,
+        'time': null,
+        'totalTime': 7,
+        'button': document.querySelector('#reload-time'),
+        'displayText': 'You can shoot faster now!',
+    },
+}
+
+for (let pu in powerUps) {
+    let bu = powerUps[pu].button;
+    bu.addEventListener('click', () => {
+        if (coins >= powerUps[pu].coins && !powerUps[pu].on) {
+            bu.style.cursor = 'not-allowed';
+            coins -= powerUps[pu].coins;
+            startPowerUpTimer(pu, powerUps[pu].totalTime);
+
+            if (pu === 'increaseHealth') {
+                player1.health = Math.min(player1.health + 50, player1.totalHealth);
+            }
+        }
+        bu.blur(); //remove keyboard focus from button
+    })
+}
+
+
+function pausePowerUp(powerUp) {
+    clearInterval(powerUps[powerUp].id);
+    powerUps[powerUp].id = null;
+}
+
+function startPowerUpTimer(powerUp, time) {
+    powerUps[powerUp].time = time;
+    powerUps[powerUp].on = true;
+
+    pausePowerUp(powerUp); //just in case, else two intervals would double the speed of timer
+
+    powerUps[powerUp].id = setInterval(() => {
+        powerUps[powerUp].time -= .01;
+        let percentTimeLeft = (powerUps[powerUp].totalTime - powerUps[powerUp].time) / powerUps[powerUp].totalTime * 100;
+        powerUps[powerUp].button.style.background = `linear-gradient(#e8e8e4  ${percentTimeLeft}%, #FF4742 ${percentTimeLeft}%)`
+
+        if (powerUps[powerUp].time <= 0) {
+            pausePowerUp(powerUp);
+            powerUps[powerUp].time = null;
+            powerUps[powerUp].on = false;
+
+            powerUps[powerUp].button.style.background = '';
+        }
+    }, 10);
+}
+
+//! ----------------------------------------------------
+
+ctx.font = '75px sans serif'; 
+ctx.fillText('Loading...  Please Wait', 150, 300);
+ctx.font = '10px sans serif'; //Default value
+
+let backgroundLoadingId = setInterval(() => {
+    if (backgroundIsLoaded) {
+
+        console.log('Game Started');
+        clearInterval(backgroundLoadingId);
+        initPrep();
+    }
+}, 100);
+
