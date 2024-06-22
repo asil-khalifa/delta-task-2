@@ -14,9 +14,10 @@
 </head>
 
 <body>
-    <a href="index.html"><button id="backButton">← BACK</button></a>
+    <a href="index.html"><button id="backButton">← HOME</button></a>
     <h2 id="player-instruction"></h2>
-    <button id="resetButton" class="hide-element buttons1">RESET GAME</button>
+    <button id="resetButton" class="hide-element buttons1">NEW GAME</button>
+    <a href="leaderboard/leaderboard.html"><button id="viewLeaderboard" class="buttons1">View Leaderboard</button></a>
     <button id="startInvasion" class="buttons1">START INVASION!</button>
     <button id="pauseButton" class="buttons1">PAUSE</button>
 
@@ -28,18 +29,35 @@
         </div>
     </div>
     <div id="invasion-panel">
-        <div id="gun1Div">
+        <div id="gun1Div" class="gunDiv">
             <img src="images/gun1.png" alt="Semi-Automatic">
-            <h3>1</h3>
+            <h3>Press 1</h3>
         </div>
-        <div id="gun2Div">
+        <div id="gun2Div" class="gunDiv">
             <img src="images/gun2.png" alt="Pistol">
-            <h3>2</h3>
+            <h3>Press 2</h3>
         </div>
-        <div id="gun3Div">
+        <div id="gun3Div" class="gunDiv">
             <img src="images/gun3.png" alt="Rifle">
-            <h3>3</h3>
+            <h3>Press 3</h3>
         </div>
+        <div class="power-up-div">
+            <button id="jetpack" class="power-up" role="button">Jetpack</button>
+            <h4>100 Coins</h4>
+        </div>
+        <div class="power-up-div">
+            <button id="temp-immunity" class="power-up" role="button">Temporary<br>Immunity</button>
+            <h4>50 Coins</h4>
+        </div>
+        <div class="power-up-div">
+            <button id="increase-health" class="power-up" role="button">+ 50<br>Health</button>
+            <h4>50 Coins</h4>
+        </div>
+        <div class="power-up-div">
+            <button id="reload-time" class="power-up" role="button">Faster<br>Reload</button>
+            <h4>30 Coins</h4>
+        </div>
+
     </div>
 
     <div id="saveGamePanel">
@@ -48,6 +66,7 @@
         <input type="text" placeholder="Your Name" required>
         <button id="submitSave">Submit</button>
     </div>
+
 
     <script src="game.js"></script>
 </body>
