@@ -60,7 +60,7 @@ canvas{
     
 }
 
-#invasion-panel div{
+.gunDiv{
     margin-right: 10px;
     background-color: #fefae0;
     width: 90px;
@@ -70,6 +70,7 @@ canvas{
     justify-content: center;
     align-items: center;
 }
+
 #invasion-panel div img{
     width: 75px;
     height: 75px;
@@ -117,3 +118,47 @@ canvas{
     justify-content: center;
     align-items: center;
 }
+
+.power-up {
+    /* background: #FF4742; */
+    /* background: linear-gradient(#FF4742 50%, #e8e8e4 50%); */
+    background-color: #6c757d;
+    border: 1px solid #6c757d;
+    border-radius: 6px;
+
+    color: #FFFFFF;
+
+    cursor: not-allowed;
+
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 16px;
+    height: 70px;
+
+    margin: 0 5px;
+    padding: 12px 14px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  
+  .power-up-hover:hover,
+  .power-up-hover:active {
+    background-color: initial;
+    background-position: 0 0;
+    color: #FF4742;
+  }
+  
+  .power-up:active {
+    opacity: .5;
+  }
+
+.power-up-div {
+    display: inline;
+}
+
+.power-up-div h4{
+    color: #001d3d;
+    margin: 0;
+    text-align: center;
+}
+
