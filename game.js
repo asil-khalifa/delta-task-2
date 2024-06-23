@@ -2,7 +2,11 @@ const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 const controlPanel = document.querySelector('#control-panel');
 const invasionPanel = document.querySelector('#invasion-panel');
-const dragTest = document.querySelector('#control-panel div img');
+
+//draggables:
+const dragBlock = document.querySelector('#block-panel img');
+const dragTnt = document.querySelector('#tnt-panel img');
+const dragStunGrenade = document.querySelector('#stun-grenade-panel img');
 
 const playerInstruction = document.querySelector('#player-instruction');
 const saveGamePanel = document.querySelector('#saveGamePanel');
@@ -15,8 +19,8 @@ const leaderboardButton = document.querySelector('#viewLeaderboard');
 const startInvasion = document.querySelector('#startInvasion');
 const pauseButton = document.querySelector('#pauseButton');
 
-let availableBlocks = 5;
-let preparationTime = 20; //seconds
+
+let preparationTime = 35; //seconds
 let curTime = undefined; //Current Time
 
 let playerStandRight = new Image();
@@ -41,11 +45,21 @@ const spookySfxAudio = new Audio('audio/spookySfx3.mp3');
 const slashingBlockAudio = new Audio('audio/slashing.mp3');
 const slashingPlayerAudio = new Audio('audio/slashingPlayer.mp3');
 const zombieDeathAudio = new Audio('audio/zombieDeath.mp3');
+const tntAudio = new Audio('audio/tnt.mp3');
+const stunGrenadeAudio = new Audio('audio/stunGrenade.mp3');
+const powerUpAudio = new Audio('audio/powerUp.mp3');
+const gameOverAudio = new Audio('audio/gameOver.mp3');
+const gameWonAudio = new Audio('audio/gameWon.mp3');
 
 //Mouse coordinates: offsetX and offsetY within canvas for gun rotation:
 let mouseCoords = {
     x: 1024,
     y: 475
+}
+
+let mouseClick = {
+    x: null,
+    y: null
 }
 
 //Zombie images:
@@ -188,10 +202,10 @@ function healthBar(x, y, health, totalHealth, color = '#06d6a0') {
 }
 
 class Player {
-    constructor() {
+    constructor(y = 400) {
         //position
         this.x = canvas.width / 2;
-        this.y = 400;
+        this.y = y;
 
         //size
         this.width = 77.4375;
@@ -359,6 +373,12 @@ class Player {
             bgObjects.forEach(obj => {
                 obj.dx = -.7 * this.speedFactor;
             })
+            dragItem.tnt.list.forEach(tnt => {
+                tnt.dx = -this.speedFactor;
+            })
+            dragItem.stunGrenade.list.forEach(stunGrenade => {
+                stunGrenade.dx = -this.speedFactor;
+            })
 
             playerWalkingAudio.play();
         }
@@ -371,6 +391,13 @@ class Player {
             bgObjects.forEach(obj => {
                 obj.dx = .7 * this.speedFactor;
             })
+            dragItem.tnt.list.forEach(tnt => {
+                tnt.dx = this.speedFactor;
+            })
+            dragItem.stunGrenade.list.forEach(stunGrenade => {
+                stunGrenade.dx = this.speedFactor;
+            })
+
             playerWalkingAudio.play();
         }
         else {
@@ -379,6 +406,12 @@ class Player {
             })
             bgObjects.forEach(obj => {
                 obj.dx = 0;
+            })
+            dragItem.tnt.list.forEach(tnt => {
+                tnt.dx = 0;
+            })
+            dragItem.stunGrenade.list.forEach(stunGrenade => {
+                stunGrenade.dx = 0;
             })
         }
 
@@ -405,6 +438,13 @@ class Player {
             bgObjects.forEach(obj => {
                 obj.x += obj.dx * deltaT;
             })
+            dragItem.tnt.list.forEach(tnt => {
+                tnt.x += tnt.dx * deltaT;
+            })
+            dragItem.stunGrenade.list.forEach(stunGrenade => {
+                stunGrenade.x += stunGrenade.dx * deltaT;
+            })
+
         }
 
         this.draw();
@@ -425,8 +465,8 @@ class Block {
         this.y = y;
         this.dx = 0;
 
-        this.totalHealth = 150;
-        this.health = 150;
+        this.totalHealth = 100;
+        this.health = 100;
     }
 
     draw() {
@@ -464,6 +504,7 @@ class Gun {
         this.angle = 0;
 
         this.cooldown = 0;
+        this.recoil = 0;
     }
 
     getMirrorImage() {
@@ -491,7 +532,7 @@ class Gun {
         if (this.angle < -Math.PI / 2 || this.angle > Math.PI / 2) {
             img = this.getMirrorImage();
         }
-        ctx.drawImage(img, -this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.drawImage(img, -this.width / 2 + this.recoil, -this.height / 2, this.width, this.height);
         ctx.restore();
     }
 
@@ -538,6 +579,22 @@ class Gun {
                 this.cooldown = 0;
                 reloadAudio.play();
             }, cooldownTime * 1000);
+
+            //recoil:
+            // for (let i= -2; i <= 2; i+=.1)
+            let i = -2;
+            let id = setInterval(() => {
+                if (i > 2) {
+                    clearInterval(id);
+                    this.recoil = 0;
+                    return;
+                }
+                this.recoil = 5 * i ** 2 - 20;
+                i += .1;
+            }, cooldownTime / (4 * 40) * 1000);
+            // 40 = (2- (-2))/.1
+
+
         }
     }
 
@@ -577,10 +634,10 @@ class Bullet {
             this.damage = 15;
         }
         else if (this.gun === gunImage2) {
-            this.damage = 10;
+            this.damage = 25;
         }
         else if (this.gun === gunImage3) {
-            this.damage = 30;
+            this.damage = 40;
         }
     }
 
@@ -640,8 +697,10 @@ class Zombie {
 
         this.dx = dx;
         this.dy = dy;
+        this.defaultSpeed = dx;
+        this.stunTimeouts = [];
 
-        this.acc = gravity/20;
+        this.acc = gravity / 20;
 
         this.width = 101.818; //This is the display width while walking
         this.height = 140;
@@ -649,6 +708,19 @@ class Zombie {
         this.setBasicDetails();
         this.updateDetails();
         this.updateFrames(16.6667);
+    }
+
+    stun(t){
+
+        this.dx = 0;
+        if (this.stunTimeouts.length >0 ){
+            clearTimeout(this.stunTimeouts[0]);
+            this.stunTimeouts.pop();
+        }
+        setTimeout(() => {
+            this.dx = this.defaultSpeed;
+            this.stunTimeouts.pop();
+        }, t * 1000);
     }
 
     setBasicDetails() {
@@ -663,7 +735,7 @@ class Zombie {
             this.coins = 5;
         }
         else if (this.number === '3') {
-            this.damage = .05;
+            this.damage = .07;
             this.health = 50;
             this.totalHealth = 50;
             this.points = 10;
@@ -674,7 +746,7 @@ class Zombie {
             this.health = 75;
             this.totalHealth = 75;
             this.points = 20;
-            this.coins = 13;
+            this.coins = 16;
         }
 
     }
@@ -733,32 +805,6 @@ class Zombie {
         let updateX = true, newAction = 'walking';
         let dummyAddOffset = new Dummy(this.x + scrollOffset + this.dx * deltaT, this.y, this.width, this.height);
 
-        // y Movements:
-
-        //Prevent falling below ground
-        // if (dummyAddOffset.y + this.height > canvas.height) {
-        //     console.log('below ground');
-        //     this.y = canvas.height - this.height;
-        //     // this.dy = 0;
-        // }
-        // else {
-        //     let blockAdjusted = false;
-        //     for (let block of blocks) {
-        //         if (xOverlap1(dummyAddOffset, block) && this.y + this.height <= block.y && dummyAddOffset.y + this.height > block.y) {
-        //             this.y = block.y - this.height;
-        //             // this.dy = 0;
-        //             blockAdjusted = true;
-        //             console.log('below block');
-
-        //             //break;
-        //         }
-        //     }
-        //     if (!blockAdjusted) {
-        //         this.y = dummyAddOffset.y;
-        //         this.dy += this.acc * deltaT;
-        //     }
-        // }
-
         //if there will be collision with player...
         if (xOverlap1(player1, dummyAddOffset) && yOverlap1(dummyAddOffset, player1)) {
             updateX = false;
@@ -769,7 +815,7 @@ class Zombie {
             slashingPlayerAudio.play();
         }
         //else statement so that either player or block, not both are hit
-        else {
+        else if (this.number !== '3'){
             // if there will be collision with block...
             for (let block of blocks) {
                 if (xOverlap1(dummyAddOffset, block) && yOverlap1(block, dummyAddOffset)) {
@@ -794,11 +840,87 @@ class Zombie {
 
         //Special Ability Zombie:
         //Regenerate Health:
-        if (this.number === '2'){
-            this.health = Math.min(this.totalHealth, this.health + .2);
+        if (this.number === '2') {
+            this.health = Math.min(this.totalHealth, this.health + .15);
         }
 
         this.draw();
+    }
+}
+
+class Tnt {
+    constructor(x, y, width = 65, height = 91) {
+        this.x = x;
+        this.y = y;
+        this.image = tntImage;
+        this.width = width;
+        this.height = height;
+
+        this.blastRadius = 130;
+        this.damage = 35;
+
+        this.remove = false;
+    }
+
+    draw() {
+        ctx.drawImage(tntImage, this.x, this.y, this.width, this.height);
+    }
+
+    blast(){
+        if (powerUps.useTnt.blastOn){
+            if (mouseClick.x && mouseClick.x >= this.x && mouseClick.x <= this.x + this.width &&
+                mouseClick.y >= this.y && mouseClick.y <= this.y + this.height
+            ){
+                for (let zombie of zombies){
+                    if (Math.abs(this.x + this.width/2 - (zombie.x + scrollOffset)) <= this.blastRadius){
+                        zombie.health = Math.max(0, zombie.health - this.damage);
+                    }
+                }
+                tntAudio.play();
+                mouseClick.x = null;
+                mouseClick.y = null;
+                this.remove = true;
+                powerUps.useTnt.blastOn = false;
+            }
+        }
+    }
+}
+
+class StunGrenade {
+    constructor(x, y, width = 45, height = 90) {
+        this.x = x;
+        this.y = y;
+        this.image = stunGrenadeImage;
+        this.width = width;
+        this.height = height;
+
+        this.blastRadius = 135;
+        this.stunTime = 8;
+        this.remove = false;
+    }
+
+    draw() {
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    }
+
+    blast(){
+        if (powerUps.useStunGrenade.blastOn){
+
+            if (mouseClick.x && mouseClick.x >= this.x && mouseClick.x <= this.x + this.width &&
+                mouseClick.y >= this.y && mouseClick.y <= this.y + this.height
+            ){
+                for (let zombie of zombies){
+                    if (Math.abs(this.x + this.width/2 - (zombie.x + scrollOffset)) <= this.blastRadius){
+                        zombie.stun(this.stunTime);
+                    }
+                }
+                stunGrenadeAudio.play();
+                mouseClick.x = null;
+                mouseClick.y = null;
+                this.remove = true;
+                powerUps.useStunGrenade.blastOn = false;
+            }
+        }
     }
 }
 
@@ -808,6 +930,32 @@ class Dummy {
             this.y = y,
             this.width = width,
             this.height = height
+    }
+}
+
+class KillMessage {
+    constructor(x, y, message1, message2) {
+        this.x = x;
+        this.y = y;
+        this.message1 = message1;
+        this.message2 = message2;
+        this.remove = false;
+        this.setTimer(.4);
+    }
+
+    setTimer(t) {
+        setTimeout(() => {
+            this.remove = true;
+        }, t * 1000);
+    }
+
+    draw() {
+        console.log('hi');
+        ctx.font = '13px "Noto Sans"';
+        ctx.fillStyle = '#ffbe0b';
+        ctx.fillText(this.message1, this.x, this.y);
+        ctx.fillText(this.message2, this.x, this.y + 14.5);
+        ctx.font = '10px sans serif'; //Default value
     }
 }
 
@@ -921,7 +1069,7 @@ function animateInvasion(timeStamp) {
         }
     }
 
-    else {  
+    else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         bgObjects.forEach(obj => {
@@ -943,9 +1091,46 @@ function animateInvasion(timeStamp) {
             if (zombies[i].health === 0) {
                 coins += zombies[i].coins;
                 points += zombies[i].points;
-                zombies.splice(i, 1);
                 zombieDeathAudio.play();
+
+                killMessages.push(new KillMessage(zombies[i].x + scrollOffset, zombies[i].y - 17.5, `+${zombies[i].coins} coins!`, `+${zombies[i].points} points!`));
+
+                zombies.splice(i, 1);
             }
+        }
+
+        for (let i = killMessages.length - 1; i >= 0; i--) {
+            if (killMessages[i].remove) {
+                console.log(i);
+                killMessages.splice(i, 1);
+            }
+        }
+
+        //remove tnts that have been blasted
+        for (let i = dragItem.tnt.list.length - 1; i>=0; i--){
+            if (dragItem.tnt.list[i].remove){
+                dragItem.tnt.list.splice(i, 1);
+            }
+        }
+
+        for (let i = dragItem.stunGrenade.list.length - 1; i>=0; i--){
+            if (dragItem.stunGrenade.list[i].remove){
+                dragItem.stunGrenade.list.splice(i, 1);
+            }
+        }
+
+        if (dragItem.tnt.list.length === 0){
+            powerUps.useTnt.button.parentElement.title = 'You have no more TNTs to use!';
+        }
+        else{
+            powerUps.useTnt.button.parentElement.title = 'Allows you to click on a tnt to activate it!';
+        }
+
+        if (dragItem.stunGrenade.list.length === 0){
+            powerUps.useStunGrenade.button.parentElement.title = 'You have no more Stun Grenades to use!';
+        }
+        else{
+            powerUps.useStunGrenade.button.parentElement.title = 'Stun zombies, temporarily disabling their motion!';
         }
 
         //Draw:
@@ -957,6 +1142,18 @@ function animateInvasion(timeStamp) {
 
         for (let zombie of zombies) {
             zombie.update(deltaT);
+        }
+
+        for (let kMessage of killMessages) {
+            kMessage.draw();
+        }
+
+        for (let tnt of dragItem.tnt.list){
+            tnt.draw();
+        }
+
+        for (let stunGrenade of dragItem.stunGrenade.list){
+            stunGrenade.draw();
         }
 
         player1.update(deltaT);
@@ -982,8 +1179,8 @@ function animateInvasion(timeStamp) {
         for (let pu in powerUps) {
             if (!powerUps[pu].on) {
 
-                let jetpackCoinsLeft = Math.max(0, (powerUps[pu].coins - coins) / powerUps[pu].coins * 100);
-                powerUps[pu].button.style.background = `linear-gradient(#6c757d  ${jetpackCoinsLeft}%, #06d6a0 ${jetpackCoinsLeft}%)`;
+                let powerUpCoinsLeft = Math.max(0, (powerUps[pu].coins - coins) / powerUps[pu].coins * 100);
+                powerUps[pu].button.style.background = `linear-gradient(#6c757d  ${powerUpCoinsLeft}%, #06d6a0 ${powerUpCoinsLeft}%)`;
 
                 if (coins >= powerUps[pu].coins) {
                     powerUps[pu].button.style.cursor = 'pointer';
@@ -1021,6 +1218,7 @@ function animateInvasion(timeStamp) {
                 }, 2.5 * 1000));
 
                 spookySfxAudio.pause();
+                gameWonAudio.play();
                 return;
             }
         }
@@ -1037,7 +1235,7 @@ function animateInvasion(timeStamp) {
 
             ctx.font = '48px "Roboto Slab", serif';
             ctx.fillStyle = 'red';
-            ctx.fillText('You Lost!', 400, 250);
+            ctx.fillText('You Lost!', 420, 250);
 
             ctx.font = '18px "Roboto Slab", serif';
             ctx.fillStyle = 'black';
@@ -1060,6 +1258,7 @@ function animateInvasion(timeStamp) {
             //Reset Button:
 
             spookySfxAudio.pause();
+            gameOverAudio.play();
             return;
         }
 
@@ -1069,11 +1268,11 @@ function animateInvasion(timeStamp) {
         })
 
         zombies.forEach(zombie => {
-            if (zombie.number === '2'){
+            if (zombie.number === '2') {
                 healthBar(zombie.x + scrollOffset, zombie.y - 20, zombie.health, zombie.totalHealth, '#d00000');
 
             }
-            else{
+            else {
 
                 healthBar(zombie.x + scrollOffset, zombie.y - 20, zombie.health, zombie.totalHealth, '#ef476f');
             }
@@ -1118,7 +1317,16 @@ function animateInvasion(timeStamp) {
 
     ctx.font = '10px sans serif'; //Default value
 
+    //tnt
 
+    dragItem.tnt.list.forEach(tnt => {
+        tnt.blast();
+    })
+
+    dragItem.stunGrenade.list.forEach(stunGrenade => {
+        stunGrenade.blast();
+    })
+    
 
     requestAnimationFrame(animateInvasion);
 }
@@ -1153,8 +1361,22 @@ function animatePrep(timeStamp) {
             block.draw();
         }
 
+        for (let tnt of dragItem.tnt.list){
+            tnt.draw();
+        }
+
+        for (let stunGrenade of dragItem.stunGrenade.list){
+            stunGrenade.draw();
+        }
+
         player1.update(deltaT);
         //* Player is to be updated last to keep it in front of everything else
+
+        
+        ctx.fillStyle = '#d90429';
+        ctx.font = '50px "Orbitron"';
+        ctx.fillText(`${Math.floor(remainingPrepTime/60)}:${Math.floor(remainingPrepTime%60)}`, canvas.width - 155, 60);
+
 
     }
 
@@ -1171,6 +1393,12 @@ function animatePrep(timeStamp) {
 
 const blockImage = new Image();
 blockImage.src = 'images/block.png';
+
+const tntImage = new Image();
+tntImage.src = 'images/tnt1.png';
+
+const stunGrenadeImage = new Image();
+stunGrenadeImage.src = 'images/stunGrenade.png';
 
 //Check whether background is loaded:
 const backgroundImage = new Image();
@@ -1227,7 +1455,7 @@ let gun = guns[0];
 
 let bullets = [];
 
-let blocks = [new Block(600, canvas.height - 100), new Block(800, canvas.height - 100), new Block(800, canvas.height - 200)];
+let blocks = [];
 let blockIndicesRemove = [];
 
 let bgObjects; //[new BgObject(-1, -1, 'background'),  new BgObject(-1, -1, 'hills')]; 
@@ -1248,6 +1476,7 @@ let zombieStopIds;
 
 let points = 0;
 let coins = 0;
+let killMessages = [];
 
 let phaseChangeTimeoutIds = [];
 
@@ -1276,15 +1505,23 @@ function initInvasion() {
         blocks.pop();
     }
 
-    player1 = new Player();
+    if (dragItem.tnt.list.length > 0 && dragItem.tnt.list[dragItem.tnt.list.length - 1].width === 0) {
+        dragItem.tnt.list.pop();
+    }
+
+    if (dragItem.stunGrenade.list.length > 0 && dragItem.stunGrenade.list[dragItem.stunGrenade.list.length - 1].width === 0) {
+        dragItem.stunGrenade.list.pop();
+    }
+
+    player1 = new Player(0);
     player1.draw();
 
     //Zombies Number
 
     noZombies = {
-        '1': Math.floor(15 + phase*2),
-        '2': Math.floor(2 + phase*1.5),
-        '3': Math.floor(3 + phase*2),
+        '1': Math.floor(15 + phase * 2),
+        '2': Math.floor(2 + phase * 1.5),
+        '3': Math.floor(3 + phase * 2),
 
     }
 
@@ -1363,42 +1600,68 @@ function initInvasion() {
     requestAnimationFrame(animateInvasion);
 }
 
+let remainingPrepTime = null;
+let remainingPrepTimeId = null;
+
 function initPrep() {
     playerInstruction.classList.remove('hide-element');
     pauseButton.classList.add('hide-element');
     startInvasion.classList.remove('hide-element');
     leaderboardButton.classList.add('hide-element');
+    
+
+    if (remainingPrepTime === null){
+        remainingPrepTime = preparationTime + phase * 10;
+        remainingPrepTimeId = setInterval(()=>{
+            remainingPrepTime -= .01;
+        }, 10);
+    }
 
     phaseChangeTimeoutIds.push(setTimeout(() => {
         phase++;
         prepPhase = false;
+        remainingPrepTime = null;
+        clearInterval(remainingPrepTimeId);
     }, (preparationTime + phase * 10) * 1000));
 
     prepPhase = true;
 
     resetButton.classList.add('hide-element');
-    controlPanel.style.display = 'block';
+    controlPanel.style.display = '';
     invasionPanel.style.display = 'none';
 
     keys.right.pressed = false;
     keys.left.pressed = false;
     keys.flyUp.pressed = false;
 
-    availableBlocks = Math.min(15, 5 + 3 * phase);
+    dragItem.block.available = Math.min(15, 5 + 3 * phase);
+    dragItem.tnt.available = 1 + phase;
+    dragItem.stunGrenade.available = 1 + phase;
 
-    let txt = document.querySelector('#control-panel div h3');
-    txt.innerText = availableBlocks;
+    let txt = document.querySelector('#block-panel h3');
+    txt.innerText = dragItem.block.available;
+
+    txt = document.querySelector('#tnt-panel h3');
+    txt.innerText = dragItem.tnt.available;
+
+    txt = document.querySelector('#stun-grenade-panel h3');
+    txt.innerText = dragItem.stunGrenade.available;
 
     player1 = new Player();
     player1.draw();
 
     blocks = [];
+    for (di in dragItem){
+        dragItem[di].list = [];
+    }
+    dragItem.block.list = blocks;
+
     zombies = [];
 
     bgObjects = [new BgObject(-1, -1, 'background'), new BgObject(-1317, -1, 'background'), new BgObject(1317, -1, 'background'), new BgObject(1317 * 2, -1, 'background'), new BgObject(1317 * 3, -1, 'background'), , new BgObject(1317 * 4, -1, 'background'), , new BgObject(1317 * (-2), -1, 'background'), new BgObject(1317 * (-3), -1, 'background'), new BgObject(1317 * (-4), -1, 'background')];
 
     document.title = 'Last Stand | Preparation';
-    playerInstruction.innerText = 'Drag and Drop Blocks. Build a protection before the zombies arrive!';
+    playerInstruction.innerText = 'Drag and Drop Blocks, TNT and stun grenades. Build a protection before the zombies arrive!';
 
     requestAnimationFrame(animatePrep);
 }
@@ -1420,6 +1683,10 @@ resetButton.addEventListener('click', () => {
     for (let id of phaseChangeTimeoutIds) {
         clearInterval(id);
     }
+
+    remainingPrepTime = null;
+    clearInterval(remainingPrepTimeId);
+
     initPrep();
 });
 
@@ -1431,6 +1698,8 @@ startInvasion.addEventListener('click', () => {
         clearInterval(phaseChangeTimeoutIds[0]);
         phase++;
         prepPhase = false;
+        remainingPrepTime = null;
+        clearInterval(remainingPrepTimeId);
     }
 });
 
@@ -1441,11 +1710,42 @@ let dragOffsets = {
     y: 0
 }
 
-dragTest.addEventListener('dragstart', e => {
-    if (availableBlocks && prepPhase) {
-        updateDragOffsets(e);
-    }
-})
+let xyz = blocks;
+
+let dragging;
+let dragItem = {
+    'block': {
+        available: 5,
+        object: Block,
+        list: xyz,
+        dragImage: dragBlock,
+        txt: document.querySelector('#block-panel h3'),
+    },
+    'tnt': {
+        available: 1,
+        object: Tnt,
+        list: [],
+        dragImage: dragTnt,
+        txt: document.querySelector('#tnt-panel h3'),
+    },
+    'stunGrenade': {
+        available: 1,
+        object: StunGrenade,
+        list: [],
+        dragImage: dragStunGrenade,
+        txt: document.querySelector('#stun-grenade-panel h3'),
+    },
+}
+
+
+for (let di in dragItem) {
+    dragItem[di].dragImage.addEventListener('dragstart', e => {
+        if (dragItem[di].available && prepPhase) {
+            updateDragOffsets(e);
+            dragging = di;
+        }
+    })
+}
 
 function updateDragOffsets(e) {
     dragOffsets.x = e.offsetX;
@@ -1453,64 +1753,58 @@ function updateDragOffsets(e) {
 }
 
 canvas.addEventListener('dragover', e => {
-    if (availableBlocks && prepPhase) {
+    if (dragItem[dragging].available && prepPhase) {
         e.preventDefault();
         dragoverHandler(e);
     }
-})
-
-
-canvas.addEventListener('drop', e => {
-    if (!prepPhase || !availableBlocks) return;
-
-    blocks.push(new Block(0, 0, 0, 0)); //Placeholder block, because we pop in dragoverhandler
-
-    availableBlocks--;
-    let txt = document.querySelector('#control-panel div h3');
-    txt.innerText = availableBlocks;
-
 })
 
 function dragoverHandler(e) {
     //below line no need because it's checked when fn is called
     // if (!availableBlocks || !prepPhase) return;
 
-    blocks.pop();
+    dragItem[dragging].list.pop();
 
     let newX = e.offsetX - dragOffsets.x;
     let newY = e.offsetY - dragOffsets.y;
 
-    let newBlock = new Block(newX, newY);
+    let newItem = new dragItem[dragging].object(newX, newY);
 
-    // //Disallow player to place blocks near spawn area of player:
-    // toBeSkipped = false;
-    // if (newX < canvas.width / 2 + 100 + scrollOffset && newX > canvas.width / 2 - 25 + scrollOffset||
-    //     newX + newBlock.width > canvas.width / 2 - 25 + scrollOffset && newX + newBlock.width < canvas.width / 2 + 100 + scrollOffset
-    // ) {
-    //     toBeSkipped = true;
-    //     blocks.push(new Block(0, 0, 0, 0)); //Placeholder block, because we pop in dragoverhandler
+    let itemHeight = newItem.height;
 
-    //     return;
-    // }
+    let lowestItemY = canvas.height - itemHeight;
 
-    let blockHeight = newBlock.height;
-
-    let lowestBlockY = canvas.height - blockHeight;
-
-    blocks.forEach(block => {
-        if (xOverlap1(newBlock, block) && (lowestBlockY < (block.y + block.height))) {
-            if (block.y <= lowestBlockY) {
-                lowestBlockY = block.y - blockHeight;
+    dragItem[dragging].list.forEach(item => {
+        if (xOverlap1(newItem, item) && (lowestItemY < (item.y + item.height))) {
+            if (item.y <= lowestItemY) {
+                lowestItemY = item.y - itemHeight;
             }
         }
     })
 
-    newBlock.y = lowestBlockY;
+    newItem.y = lowestItemY;
 
-    if (newBlock.y >= 0) {
-        blocks.push(newBlock);
+    if (newItem.y >= 0) {
+        dragItem[dragging].list.push(newItem);
+    }
+    else{
+        console.log('what');
     }
 }
+
+canvas.addEventListener('drop', () => {
+    if (!dragItem[dragging] ||!prepPhase || !dragItem[dragging].available){
+        return;
+    }
+
+    dragItem[dragging].list.push(new dragItem[dragging].object(0, 0, 0, 0)); //Placeholder block, because we pop in dragoverhandler
+
+    dragItem[dragging].available--;
+    dragItem[dragging].txt.innerText = dragItem[dragging].available;
+
+})
+
+
 
 // Avoid text getting selected when double clicking:
 
@@ -1564,6 +1858,14 @@ canvas.addEventListener('mousemove', e => {
 
 canvas.addEventListener('mousedown', e => {
     if (!prepPhase && !gamePaused && !playerLost) gun.fire();
+    if (powerUps.useTnt.on){
+        mouseClick.x = e.offsetX;
+        mouseClick.y = e.offsetY;
+    }
+    if (powerUps.useStunGrenade.on){
+        mouseClick.x = e.offsetX;
+        mouseClick.y = e.offsetY;
+    }
 })
 
 pauseButton.addEventListener('click', () => {
@@ -1618,7 +1920,17 @@ function handlePause() {
     }
 */
 
-saveGameButton.addEventListener('click', () => {
+//save game:
+
+saveGamePanelInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        handleSave();
+    }
+});
+
+saveGameButton.addEventListener('click', handleSave)
+
+function handleSave() {
     let name = saveGamePanelInput.value;
     let log = localStorage.getItem('lastStandLogAsil');
 
@@ -1645,8 +1957,7 @@ saveGameButton.addEventListener('click', () => {
     saveGamePanel.classList.add('saveGameDisplay1');
     saveGamePanel.classList.remove('saveGameDisplay2');
 
-
-})
+}
 
 //Power Ups:
 
@@ -1664,7 +1975,7 @@ let powerUps = {
     },
     'tempImmunity': {
         'on': false,
-        'coins': 50,
+        'coins': 40,
         'id': null,
         'time': null,
         'totalTime': 7.5,
@@ -1689,12 +2000,45 @@ let powerUps = {
         'button': document.querySelector('#reload-time'),
         'displayText': 'You can shoot faster now!',
     },
+    'useTnt': {
+        'on': false,
+        'blastOn': false,
+        'coins': 5,
+        'id': null,
+        'time': null,
+        'totalTime': 10,
+        'button': document.querySelector('#use-tnt'),
+        'displayText': 'Click on TNT to activate!',
+    },
+    'useStunGrenade': {
+        'on': false,
+        'blastOn': false,
+        'coins': 5,
+        'id': null,
+        'time': null,
+        'totalTime': 10,
+        'button': document.querySelector('#use-stun-grenade'),
+        'displayText': 'Click on Stun Grenade to activate!',
+    },
 }
 
 for (let pu in powerUps) {
     let bu = powerUps[pu].button;
     bu.addEventListener('click', () => {
         if (coins >= powerUps[pu].coins && !powerUps[pu].on) {
+
+            if (pu === 'useStunGrenade'){
+                if (dragItem['stunGrenade'].list.length === 0){
+
+                    return;
+                }
+            }
+            else if (pu === 'useTnt'){
+                if (dragItem['tnt'].list.length === 0){
+                    return;
+                }
+            }
+
             bu.style.cursor = 'not-allowed';
             coins -= powerUps[pu].coins;
             startPowerUpTimer(pu, powerUps[pu].totalTime);
@@ -1702,6 +2046,9 @@ for (let pu in powerUps) {
             if (pu === 'increaseHealth') {
                 player1.health = Math.min(player1.health + 50, player1.totalHealth);
             }
+
+            powerUpAudio.play();
+
         }
         bu.blur(); //remove keyboard focus from button
     })
@@ -1716,6 +2063,9 @@ function pausePowerUp(powerUp) {
 function startPowerUpTimer(powerUp, time) {
     powerUps[powerUp].time = time;
     powerUps[powerUp].on = true;
+    if (powerUp === 'useTnt' || powerUp === 'useStunGrenade'){
+        powerUps[powerUp].blastOn = true;
+    }
 
     pausePowerUp(powerUp); //just in case, else two intervals would double the speed of timer
 
@@ -1736,7 +2086,7 @@ function startPowerUpTimer(powerUp, time) {
 
 //! ----------------------------------------------------
 
-ctx.font = '75px sans serif'; 
+ctx.font = '75px sans serif';
 ctx.fillText('Loading...  Please Wait', 150, 300);
 ctx.font = '10px sans serif'; //Default value
 
