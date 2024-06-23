@@ -11,51 +11,80 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
-    <a href="index.html"><button id="backButton">← HOME</button></a>
+    <a href="index.html"><button id="backButton" class="normal-button normal-button-hover">← HOME</button></a>
     <h2 id="player-instruction"></h2>
-    <button id="resetButton" class="hide-element buttons1">NEW GAME</button>
-    <a href="leaderboard/leaderboard.html"><button id="viewLeaderboard" class="buttons1">View Leaderboard</button></a>
-    <button id="startInvasion" class="buttons1">START INVASION!</button>
-    <button id="pauseButton" class="buttons1">PAUSE</button>
+    <button id="resetButton" class="hide-element normal-button normal-button-hover">NEW GAME</button>
+    <a href="leaderboard/leaderboard.html"><button id="viewLeaderboard" class="normal-button normal-button-hover">View
+            Leaderboard</button></a>
+    <button id="startInvasion" class="normal-button normal-button-hover">START INVASION!</button>
+    <!-- <div id="timer">
+        <span id="minutes">0</span>:
+        <span id="seconds">00</span>
+    </div> -->
+    <button id="pauseButton" class="normal-button normal-button-hover">PAUSE</button>
 
     <canvas id="canvas"></canvas>
     <div id="control-panel">
-        <div>
+        <div id="block-panel" title="Zombies have to break through a block. Winning you some time.">
             <img src="images/block.png" alt="block" draggable="true">
             <h3>4</h3>
         </div>
+
+        <div id="tnt-panel" title="Damages zombies in a small radius">
+            <img src="images/tnt1.png" alt="tnt" draggable="true">
+            <h3>1</h3>
+        </div>
+
+        <div id="stun-grenade-panel" title="Stuns zombies in a radius, temporarily disabling their motion.">
+            <img src="images/stunGrenade.png" alt="Stun Grenade" draggable="true">
+            <h3>1</h3>
+        </div>
+
     </div>
     <div id="invasion-panel">
-        <div id="gun1Div" class="gunDiv">
+        <div id="gun1Div" class="gunDiv" title="Semi-Automatic Rifle">
             <img src="images/gun1.png" alt="Semi-Automatic">
             <h3>Press 1</h3>
         </div>
-        <div id="gun2Div" class="gunDiv">
+        <div id="gun2Div" class="gunDiv" title="Pistol">
             <img src="images/gun2.png" alt="Pistol">
             <h3>Press 2</h3>
         </div>
-        <div id="gun3Div" class="gunDiv">
+        <div id="gun3Div" class="gunDiv" title="ShotGun">
             <img src="images/gun3.png" alt="Rifle">
             <h3>Press 3</h3>
         </div>
-        <div class="power-up-div">
-            <button id="jetpack" class="power-up" role="button">Jetpack</button>
-            <h4>100 Coins</h4>
+        <div id="use-tnt-div" class="power-up-div" title="Allows you to click on a tnt to activate it!">
+            <button id="use-tnt" class="power-up" role="button">Use<br>TNT</button>
+            <h4>5 Coins</h4>
         </div>
-        <div class="power-up-div">
+        <div id="use-stun-grenade-div" class="power-up-div" title="Stun zombies, temporarily disabling their motion!">
+            <button id="use-stun-grenade" class="power-up" role="button">Use Stun<br>Grenade</button>
+            <h4>5 Coins</h4>
+        </div>
+        <div class="power-up-div" title="Shoot Bullets Quicker">
+            <button id="reload-time" class="power-up" role="button">Faster<br>Reload</button>
+            <h4>30 Coins</h4>
+        </div>
+        <div class="power-up-div" title="You're immune to all damage for sometime!">
             <button id="temp-immunity" class="power-up" role="button">Temporary<br>Immunity</button>
-            <h4>50 Coins</h4>
+            <h4>40 Coins</h4>
         </div>
-        <div class="power-up-div">
+        <div class="power-up-div" title="Increases health by 50">
             <button id="increase-health" class="power-up" role="button">+ 50<br>Health</button>
             <h4>50 Coins</h4>
         </div>
-        <div class="power-up-div">
-            <button id="reload-time" class="power-up" role="button">Faster<br>Reload</button>
-            <h4>30 Coins</h4>
+        <div class="power-up-div" title="Allows you to press SpaceBar to fly!">
+            <button id="jetpack" class="power-up" role="button">Jetpack</button>
+            <h4>100 Coins</h4>
         </div>
 
     </div>
@@ -64,7 +93,7 @@
         <h2>Enter your name to save game</h2>
         <h3>Your Score:</h3>
         <input type="text" placeholder="Your Name" required>
-        <button id="submitSave">Submit</button>
+        <button id="submitSave" class="normal-button-hover normal-button">Submit</button>
     </div>
 
 
