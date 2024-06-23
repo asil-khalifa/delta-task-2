@@ -17,9 +17,10 @@
 
 <body>
     <nav id="nav">
-        <a href="leaderboard/leaderboard.html"><button>LEADERBOARD</button></a>
+        <a href="leaderboard/leaderboard.html"><button
+                class="normal-button normal-button-hover">LEADERBOARD</button></a>
         <a href="game.html">
-            <button id="startButton">START GAME</button>
+            <button id="startButton" class="normal-button normal-button-hover">START GAME</button>
         </a>
     </nav>
 
@@ -27,6 +28,91 @@
         <h1>Game Rules:</h1>
 
     </div>
+    <main>
+        <h2>Movement:</h2>
+        <h3>Press:</h3>
+        <ul>
+            <li><b>W</b>: To Jump</li>
+            <li><b>A</b>: To Move Left</li>
+            <li><b>D</b>: To Move Right</li>
+        </ul>
+        <img class = "gif" src="gifs/movement.gif" alt="Movement">
+
+
+        <h2>Placing Blocks, TNTs and Stun Grenades:</h2>
+        <h3>Drag and Drop as required.</h3>
+        <img class = "gif" src="gifs/placeBlocks.gif" alt="Placing Blocks">
+
+
+        <h2>Shooting:</h2>
+        <h3>The Gun Points in the direction of your mouse</h3>
+        <h3>Left click to shoot. The gun has to reload before you could shoot again.</h3>
+        <img class = "gif" src="gifs/shooting.gif" alt="How to Shoot">
+
+
+        <h2>Zombies:</h2>
+        <h3>The Zombies will attack you and reduce your health</h3>
+        <h3>You must shoot them to kill them. They will break any blocks that come in their path.</h3>
+        <br>
+        <h3>Types of zombies:</h3>
+        <ul>
+            <li><b>Zombie 1</b>:Killing this zombie gives you 5 points and 5 coins <img src="sprites//zombie/zombie1/Slashing/0.png" alt="zombie1"></li>
+            <li><b>Zombie 2</b>: Beware! This zombie can <b>pass through blocks!</b> It has more health and deals more damage to the player<br>Killing this zombie gives you 10 points and 9 coins<img
+                    src="sprites//zombie/zombie3/Slashing/0.png" alt="zombie2"></li>
+            <li><b>Zombie 3</b>: Beware of this zombie! Its <b>health regenerates</b> in addition to having yet more
+                health and dealing more damage.<br>Killing this zombie gives you 20 points and 16 coins<img src="sprites//zombie/zombie2/Slashing/0.png" alt="zombie3"></li>
+        </ul>
+
+        <h2>Screen Look:</h2>
+        <img src="images/screenshot.png" alt="Screenshot">
+
+        <h2>Guns:</h2>
+        <h3>Each gun has its own ups and downs</h3>
+        <h3>You may use 1,2,3 to choose between the guns (OR) simply click on the gun's icon</h3>
+        <ul>
+            <li><b>Semi-Automatic Rifle:</b> Low reload time and average damage
+                <img src="images/gun1.png" alt="Gun1">
+            </li>
+            <li><b>Pistol:</b> Average reload Time and above-average damage
+                <img src="images/gun2.png" alt="Gun2">
+            </li>
+            <li><b>Shotgun:</b> High reload Time but High Damage
+                <img src="images/gun3.png" alt="Gun3">
+            </li>
+        </ul>
+
+        <h2>Power-Ups</h2>
+        <h3>There are several Power-Ups that can be bought using coins:</h3>
+        <ul>
+            <li><b>Faster Reload: </b>Reduces reload time for all guns for 10 seconds</li>
+            <li><b>Temporary Immunity: </b>Makes Player immune to any damage for 7.5 seconds</li>
+            <li><b>+50 Health: </b>Increases player's health by 50 points</li>
+            <img class="gif" src="images/screenshot.png" alt="Screenshot">
+            <li><b>Jetpack: </b>Allows the user to use a jetpack, this can be activated by pressing <b>SpaceBar</b></li>
+            <img class="gif" src="images/usingJetpack.png" alt="Using a jetpack">
+            
+        </ul>
+        
+        <h2>TNTs and Stun Grenades</h2>
+        <h3>To use them:</h3>
+        <ul>
+            <li>First, place some TNTs and stun Grenades during preparation phase, before zombies arrive</li>
+            <li>Next, click on Use tnt or Use stun grenade, each requires 5 coins</li>
+            <li>Now, <b>click on the TNT or Stun grenade you'd like to use</b>, respectively before the time (10 seconds) runs out. Failing to do so would mean you wasted 5 coins.</li>
+        </ul>
+        <img class="gif" src="gifs/usingTnt.gif" alt="Using TNT or Stun Grenade">
+
+        <h2>Save your Game:</h2>
+        <h3>When you lose, that is the zombies kill you, a pop up will allow you to enter your name and save the game</h3>
+        <img class="gif" src="images/saveGame.png" alt="Saving a game">
+        
+        <a href="leaderboard/leaderboard.html"><h2 id="leaderboardH2">Leaderboard:</h2></a>
+        <h3>There is a local leaderboard of all games played in <b>your browser</b></h3>
+        <h3>This may be accessed by clicking on the "Leaderboard" button at the top of this page.</h3>
+        <h3>Leaderboard is based solely on number of points obtained in the game.</h3>
+        <img class="gif" src="images/leaderboard.png" alt="View Leaderboard">
+
+    </main>
     <script src="index.js"></script>
 </body>
 
