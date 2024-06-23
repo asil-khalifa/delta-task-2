@@ -4,7 +4,7 @@
 
 body{
     margin: 0;
-    background-color: #354f52;
+    background-color: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -12,10 +12,13 @@ body{
     height: 100vh;
 }
 
+
 #player-instruction{
-    border: 2.5px solid #1d3557;
-    background-color: #e8e8e4;
-    color: #023047;
+    font-weight: 650;
+    font-size: 22px;
+    color: #001d3d;
+    font-family: "Montserrat", sans-serif;
+
 }
 
 canvas{
@@ -28,13 +31,14 @@ canvas{
     padding: 5px 15px;
     width: 1024px;
     height: 100px;
-
+    display: flex;
 }
 
 #control-panel div{
     background-color: #fefae0;
     width: 90px;
     height: 90px;
+    margin-right: 10px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -48,7 +52,6 @@ canvas{
 #control-panel div h3{
     margin: 0;
 }
-
 
 #invasion-panel{
     background-color: #e8e8e4;
@@ -89,8 +92,8 @@ canvas{
 }
 
 #backButton{
-    font-size: 20px;
-    background-color: red;
+    /* font-size: 20px;
+    background-color: red; */
     position: absolute;
     left: 5px;
     top: 10px;
@@ -120,8 +123,6 @@ canvas{
 }
 
 .power-up {
-    /* background: #FF4742; */
-    /* background: linear-gradient(#FF4742 50%, #e8e8e4 50%); */
     background-color: #6c757d;
     border: 1px solid #6c757d;
     border-radius: 6px;
@@ -141,16 +142,10 @@ canvas{
     vertical-align: middle;
   }
   
-  .power-up-hover:hover,
-  .power-up-hover:active {
-    background-color: initial;
-    background-position: 0 0;
-    color: #FF4742;
-  }
   
-  .power-up:active {
+    .power-up:active {
     opacity: .5;
-  }
+    }
 
 .power-up-div {
     display: inline;
@@ -162,3 +157,37 @@ canvas{
     text-align: center;
 }
 
+#use-tnt-div{
+    margin-left: 15px;
+}
+
+#use-stun-grenade-div{
+    margin-right: 15px;
+}
+.normal-button{
+    background-color: #003566;
+    border: 1px solid #003566;
+    border-radius: 6px;
+
+    color: #FFFFFF;
+
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 16px;
+    /* height: 70px; */
+
+    margin: 3px 5px;
+    padding: 9px 9px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+    .normal-button-hover:hover,
+    .normal-button-hover:active {
+    background-color: initial;
+    color: #003566;
+    }
+
+    .normal-button:active {
+        opacity: .5;
+    }
