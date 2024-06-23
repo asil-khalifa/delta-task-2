@@ -1,3 +1,8 @@
+body{
+    margin: 0 auto;
+    width: 75%;
+}
+
 #nav{
     display: flex;
     justify-content: center;
@@ -9,11 +14,82 @@
 }
 
 #nav button{
-    margin: 0 20px;
-    height: 50px;
-    padding: 10px;
-    background-color: azure;
-    font-family: 'poppins', sans-serif;
-    font-weight: 450;
-    font-size: 20px;
+    height: 70px;
+}
+
+.normal-button{
+    background-color: #003566;
+    border: 1px solid #003566;
+    border-radius: 6px;
+
+    color: #FFFFFF;
+
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 16px;
+    /* height: 70px; */
+
+    margin: 3px 25px;
+    padding: 9px 9px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+    .normal-button-hover:hover,
+    .normal-button-hover:active {
+    background-color: initial;
+    color: #003566;
+    }
+
+    .normal-button:active {
+        opacity: .5;
+    }
+
+h1{
+    text-align: center;
+    font-weight: 500;
+    font-size: 7em;
+    color: #023e8a;
+}
+
+h2{
+    font-weight: 400;
+    font-size: 2em;
+    color: #023e8a;
+}
+
+h3{
+    font-weight: 400;
+    font-size: 22px;
+    color: #01132a;
+}
+
+ul li{
+    font-size: 22px;
+    line-height: 27px;
+}
+
+img{
+    width: 50%;
+    margin-left: 25%;
+    margin-right: 25%;
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+.gif{
+    width: 70%;
+    margin-left: 15%;
+    margin-right: 15%;
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+a{
+    text-decoration: none;
+}
+
+#leaderboardH2:hover{
+    background-color: #ade8f4;
+    display: inline-block;
 }
